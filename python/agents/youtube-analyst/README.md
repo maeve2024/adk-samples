@@ -59,7 +59,70 @@ graph TD
 
 ## Setup and Installation
 
-### Folder Structure
+**Prerequisites:** Python 3.10+, a [Google Cloud Project](https://cloud.google.com/) with Vertex AI enabled, and a [YouTube Data API Key](https://developers.google.com/youtube/v3/getting-started).
+
+Use the [Agent Starter Pack](https://goo.gle/agent-starter-pack) to create a production-ready project (recommended). If you need to run from this sample repo without the starter pack, see [Clone and run locally](#clone-and-run-locally-alternative) below.
+
+---
+
+### Agent Starter Pack (recommended)
+
+Use the [Agent Starter Pack](https://goo.gle/agent-starter-pack) to create a production-ready version of this agent with deployment options and automated CI/CD scripts.
+
+**You'll need:** [Google Cloud SDK](https://cloud.google.com/sdk/docs/install), a Google Cloud project with the Vertex AI API enabled, and a [YouTube Data API Key](https://developers.google.com/youtube/v3/getting-started).
+
+#### Step 1: Create project from template
+
+**Recommended:** If you have [uv](https://docs.astral.sh/uv/) installed, create your project with one command:
+
+```bash
+uvx agent-starter-pack create my-youtube-analyst -a adk@youtube-analyst
+```
+
+<details>
+<summary>Alternative: Using pip and venv</summary>
+
+```bash
+# Create and activate a virtual environment
+python -m venv .venv && source .venv/bin/activate # On Windows: .venv\Scripts\activate
+
+# Install the starter pack and create your project
+pip install --upgrade agent-starter-pack
+agent-starter-pack create my-youtube-analyst -a adk@youtube-analyst
+```
+
+</details>
+
+The starter pack will prompt you to select deployment options (e.g., Vertex AI Agent Engine or Cloud Run). Configure your YouTube Data API key in the new project's environment as needed.
+
+#### Step 2: Run the agent
+
+From your **newly created project directory** (e.g. `my-youtube-analyst`), install dependencies and run:
+
+```bash
+cd my-youtube-analyst
+uv sync --dev
+uv run adk run youtube_analyst
+```
+
+For the web UI with interactive charts:
+
+```bash
+uv run adk web
+```
+
+Select `youtube_analyst` from the dropdown menu.
+
+---
+
+### Clone and run locally (alternative)
+
+If you prefer not to use the Agent Starter Pack, you can run the agent directly from this sample directory. This path does not include deployment scaffolding or CI/CD.
+
+**You'll need:** [uv](https://docs.astral.sh/uv/) (for dependency management), a Google Cloud project with Vertex AI enabled, and a [YouTube Data API Key](https://developers.google.com/youtube/v3/getting-started).
+
+#### Folder structure
+
 ```
 youtube-analyst/
 ├── README.md                 # Documentation
@@ -75,48 +138,50 @@ youtube-analyst/
     └── prompts/              # System instructions
 ```
 
-### Prerequisites
+#### Step 1: Clone and install
 
-- Python 3.11+
-- [uv](https://github.com/astral-sh/uv) (for dependency management)
-- Google Cloud Project (with Vertex AI enabled)
-- [YouTube Data API Key](https://developers.google.com/youtube/v3/getting-started)
+```bash
+cd python/agents/youtube-analyst
+uv sync
+```
 
-### Installation
+#### Step 2: Configure environment
 
-1.  **Clone the repository and navigate to the agent:**
-    ```bash
-    cd python/agents/youtube-analyst
-    ```
+Create a `.env` file in the `youtube-analyst` directory:
 
-2.  **Install dependencies:**
-    ```bash
-    uv sync
-    ```
+```bash
+GOOGLE_CLOUD_PROJECT=your-project-id
+GOOGLE_CLOUD_LOCATION=global
+GOOGLE_GENAI_USE_VERTEXAI=1
+GOOGLE_API_KEY=your-youtube-data-api-key
+```
 
-3.  **Configure Environment:**
-    Create a `.env` file in the `youtube-analyst` directory:
-    ```bash
-    GOOGLE_CLOUD_PROJECT=your-project-id
-    GOOGLE_CLOUD_LOCATION=global
-    GOOGLE_GENAI_USE_VERTEXAI=1
-    GOOGLE_API_KEY=your-youtube-data-api-key
-    ```
+#### Step 3: Run the agent
+
+See [Usage](#usage) below.
 
 ## Usage
 
-### Running in CLI
+**CLI:**
+
 Interact with the agent directly in your terminal:
 ```bash
 uv run adk run youtube_analyst
 ```
 
-### Running with Web UI
-For a richer experience with interactive charts:
+**Web UI** (for interactive charts):
+
 ```bash
 uv run adk web
 ```
+
 *Select `youtube_analyst` from the dropdown menu.*
+
+**Development** (tests and tooling):
+
+```bash
+uv sync --dev
+```
 
 ## Example Interactions
 

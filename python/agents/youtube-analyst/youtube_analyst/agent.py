@@ -2,7 +2,6 @@ import os
 
 from google import genai
 from google.adk.agents import Agent
-from google.adk.tools import load_artifacts
 
 from .config import config
 from .tools import (
@@ -37,7 +36,6 @@ youtube_agent = Agent(
         get_current_date_time,
         get_date_range,
         render_html,
-        load_artifacts,
     ],
     generate_content_config=genai.types.GenerateContentConfig(
         max_output_tokens=config.YOUTUBE_AGENT_MAX_OUTPUT_TOKENS,
