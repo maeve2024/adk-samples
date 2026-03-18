@@ -1,7 +1,7 @@
 [project]
-name = "bigquery-data-agent"
+name = "agent-observability-bq"
 version = "0.1.0"
-description = "BigQuery Data Agent Sample using BigQuery Analytics Plugin"
+description = "Agent Observability with BigQuery Analytics Plugin Sample"
 authors = [
     { name = "Google Developers" }
 ]
@@ -27,13 +27,13 @@ dev = [
 extend = "../../../pyproject.toml"
 
 [tool.ruff.lint.isort]
-known-first-party = ["bigquery_data_agent"]
+known-first-party = ["agent_observability_bq"]
 
 [tool.agent-starter-pack]
 example_question = "What are the most popular programming languages on GitHub based on the bigquery-public-data dataset?"
 
 [tool.agent-starter-pack.settings]
-agent_directory = "bigquery_data_agent"
+agent_directory = "agent_observability_bq"
 bq_analytics = true
 
 [build-system]

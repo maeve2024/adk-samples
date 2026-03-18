@@ -2,15 +2,15 @@ from google.adk.plugins.bigquery_agent_analytics_plugin import (
     BigQueryAgentAnalyticsPlugin,
 )
 
-from bigquery_data_agent.agent import app
+from agent_observability_bq.agent import app
 
 
 def test_app_initialization():
     """Test that the application and agent initialize correctly."""
     assert app is not None
-    assert app.name == "bigquery_data_agent"
+    assert app.name == "agent_observability_bq"
     assert app.root_agent is not None
-    assert app.root_agent.name == "bigquery_data_agent"
+    assert app.root_agent.name == "agent_observability_bq"
 
 def test_plugins_and_tools():
     """Test that the BigQuery analytics plugin and BigQuery toolset are configured."""

@@ -59,8 +59,8 @@ tools.append(bigquery_toolset)
 
 root_agent = Agent(
     model="gemini-2.5-flash",
-    name='bigquery_data_agent',
-    description="An agent that helps users query and explore data in Google BigQuery.",
+    name="agent_observability_bq",
+    description="An agent that demonstrates observability via logging to Google BigQuery.",
     instruction="""
     You are a data analyst agent specializing in Google BigQuery.
     
@@ -80,7 +80,7 @@ root_agent = Agent(
 
 # --- Create the App ---
 app = App(
-    name="bigquery_data_agent",
+    name="agent_observability_bq",
     root_agent=root_agent,
     plugins=plugins,
 )
