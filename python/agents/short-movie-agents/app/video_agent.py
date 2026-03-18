@@ -103,13 +103,16 @@ def video_generate(
             operation = client.operations.get(operation)
             logger.info(f"Video generation operation: {operation}")
 
-        if operation.response:
+        if operation.response and operation.result:
+            result = operation.result
+            videos = result.generated_videos or []
             logger.info(
-                f"Generated {len(operation.result.generated_videos)} video(s) for prompt: {prompt}"
+                f"Generated {len(videos)} video(s) for prompt: {prompt}"
             )
             return [
                 video.video.uri.replace("gs://", AUTHORIZED_URI)
-                for video in operation.result.generated_videos
+                for video in videos
+                if video.video and video.video.uri
             ]
         else:
             logger.info(f"Generated no (0) video for prompt: {prompt}")

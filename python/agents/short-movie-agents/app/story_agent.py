@@ -19,7 +19,7 @@ from app.utils.utils import load_prompt_from_file
 try:
     from google.adk.agents import Agent
 except ImportError:
-    from adk.agents import Agent
+    from adk.agents import Agent  # type: ignore[no-redef]
 
 # --- Story Agent ---
 story_agent = None

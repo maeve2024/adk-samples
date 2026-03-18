@@ -32,6 +32,34 @@ short-movie-agents/
 └── pyproject.toml       # Project dependencies and configuration
 ```
 
+## Recommended: Using Agent Starter Pack
+
+You can use the [Agent Starter Pack](https://goo.gle/agent-starter-pack) to create a production-ready version of this agent with additional deployment options:
+
+If you have [`uv`](https://github.com/astral-sh/uv) installed, you can create and set up your project with a single command:
+
+```bash
+uvx agent-starter-pack create my-short-movie-agents -a adk@short-movie-agents
+```
+
+This command handles creating the project without needing to pre-install the package into a virtual environment.
+
+<details>
+<summary>Alternative: Using pip and venv</summary>
+
+```bash
+# Create and activate a virtual environment
+python -m venv .venv && source .venv/bin/activate # On Windows: .venv\Scripts\activate
+
+# Install the starter pack and create your project
+pip install --upgrade agent-starter-pack
+agent-starter-pack create my-short-movie-agents -a adk@short-movie-agents
+```
+
+</details>
+
+The starter pack will prompt you to select deployment options and provides additional production-ready features including automated CI/CD deployment scripts.
+
 ## Requirements
 
 Before you begin, ensure you have:
