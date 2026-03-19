@@ -139,7 +139,7 @@ For a richer experience with interactive charts:
 uv run adk web
 ```
 
-_Select `youtube_analyst` from the dropdown menu._
+*Select `youtube_analyst` from the dropdown menu.*
 
 ## Example Interactions
 
