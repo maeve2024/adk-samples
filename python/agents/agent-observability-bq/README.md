@@ -1,4 +1,4 @@
-# BigQuery Data Agent
+# Agent Observability (BigQuery)
 
 This sample demonstrates how to build an agent that interacts directly with Google BigQuery, while also leveraging the `BigQueryAgentAnalyticsPlugin` for observability and logging. 
 
