@@ -150,7 +150,7 @@ uv run adk web
 
 ### Sample Trace (Under the Hood)
 
-Here is what happens when you ask: _"Compare the engagement on the latest video from Running HK."_
+Here is what happens when you ask: *"Compare the engagement on the latest video from Running HK."*
 
 ```text
 [User]: Compare the engagement on the latest video from Running HK.
