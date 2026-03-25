@@ -87,9 +87,8 @@ def storyboard_generate(
                 f"Generated {len(response.images)} image(s) for prompt: {prompt}"
             )
             return [
-                uri.replace("gs://", AUTHORIZED_URI)
+                image._gcs_uri.replace("gs://", AUTHORIZED_URI)
                 for image in response.images
-                if (uri := image._gcs_uri)
             ]
         else:
             logger.info(f"Generated no (0) images for prompt: {prompt}")

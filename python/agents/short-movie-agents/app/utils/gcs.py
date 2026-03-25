@@ -15,7 +15,7 @@
 import logging
 
 from google.api_core import exceptions
-from google.cloud import storage  # type: ignore[attr-defined]
+from google.cloud import storage
 
 
 def create_bucket_if_not_exists(
