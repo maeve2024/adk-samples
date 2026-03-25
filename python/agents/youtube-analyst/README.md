@@ -33,34 +33,33 @@ graph TD
 
 ## Agent Details
 
-| Feature               | Description                                            |
-| --------------------- | ------------------------------------------------------ |
-| **Interaction Type:** | Conversational / Analytics                             |
-| **Complexity:**       | Intermediate                                           |
-| **Agent Type:**       | Multi-Agent (Root + Visualization Sub-Agent)           |
-| **Components:**       | YouTube Data API, ADK Tools, Interactive Plotly Charts |
-| **Vertical:**         | Marketing / Media Analytics                            |
+| Feature | Description |
+| --- | --- |
+| **Interaction Type:** | Conversational / Analytics |
+| **Complexity:**  | Intermediate |
+| **Agent Type:**  | Multi-Agent (Root + Visualization Sub-Agent) |
+| **Components:**  | YouTube Data API, ADK Tools, Interactive Plotly Charts |
+| **Vertical:**  | Marketing / Media Analytics |
 
 ### Component Details
 
-- **Agents:**
-  - `youtube_agent` (Root): The main orchestrator that handles user queries, YouTube data retrieval, and analysis tasks.
-  - `visualization_agent` (Sub-agent): Specialized in generating Python code to create interactive Plotly charts based on data provided by the root agent.
+*   **Agents:**
+    *   `youtube_agent` (Root): The main orchestrator that handles user queries, YouTube data retrieval, and analysis tasks.
+    *   `visualization_agent` (Sub-agent): Specialized in generating Python code to create interactive Plotly charts based on data provided by the root agent.
 
-- **Tools:**
-  - `search_youtube`: Finds videos matching specific queries and date filters.
-  - `get_video_details`: Retrieves comprehensive stats (views, likes, comments) for video IDs.
-  - `get_channel_details`: Fetches subscriber counts and total view metrics for channels.
-  - `get_video_comments`: Downloads top-level comments for sentiment analysis.
-  - `calculate_engagement_metrics`: Computes engagement and active rates.
-  - `analyze_sentiment_heuristic`: Performs keyword-based sentiment scoring on text.
-  - `render_html`: Renders HTML content (used for reports).
-  - `execute_visualization_code`: Executes generated plotting code to produce artifacts.
+*   **Tools:**
+    *   `search_youtube`: Finds videos matching specific queries and date filters.
+    *   `get_video_details`: Retrieves comprehensive stats (views, likes, comments) for video IDs.
+    *   `get_channel_details`: Fetches subscriber counts and total view metrics for channels.
+    *   `get_video_comments`: Downloads top-level comments for sentiment analysis.
+    *   `calculate_engagement_metrics`: Computes engagement and active rates.
+    *   `analyze_sentiment_heuristic`: Performs keyword-based sentiment scoring on text.
+    *   `render_html`: Renders HTML content (used for reports).
+    *   `execute_visualization_code`: Executes generated plotting code to produce artifacts.
 
 ## Setup and Installation
 
 ### Folder Structure
-
 ```
 youtube-analyst/
 ├── README.md                 # Documentation
@@ -79,67 +78,107 @@ youtube-analyst/
 ### Prerequisites
 
 - Python 3.11+
-- [uv](https://github.com/astral-sh/uv) (for dependency management)
-- Google Cloud Project (with Vertex AI enabled)
-- [YouTube Data API Key](https://developers.google.com/youtube/v3/getting-started)
+- [uv](https://docs.astral.sh/uv/) for dependency management and packaging
+  - See the official [uv website](https://docs.astral.sh/uv/) for installation.
 
-### Installation
+  ```bash
+  curl -LsSf https://astral.sh/uv/install.sh | sh
+  ```
 
-1.  **Create agent:**
-    Use the [Agent Starter Pack](https://goo.gle/agent-starter-pack) to create a production-ready version of this agent with additional deployment options.
+- Google Cloud project (with Vertex AI enabled)
+- [YouTube Data API key](https://developers.google.com/youtube/v3/getting-started) with YouTube Data API v3 enabled
+- A local `.env` file (copy from `.env.example`) with your runtime credentials
 
-    The easiest way is with [uv](https://docs.astral.sh/uv/) (one command, no venv or pip install needed):
+## Agent Starter Pack (recommended)
 
-    ```bash
-    uvx agent-starter-pack create my-youtube-analyst -a adk@youtube-analyst
-    ```
-
-    If you don't have uv yet, run:
-
-    ```bash
-    curl -LsSf https://astral.sh/uv/install.sh | sh
-    ```
-
-2.  **Navigate to the agent:**
-
-    ```bash
-    cd youtube-analyst
-    ```
-
-3.  **Install dependencies:**
-
-    ```bash
-    uv sync
-    ```
-
-4.  **Configure Environment:**
-    Create a `.env` file in the `youtube-analyst` directory:
-    ```bash
-    GOOGLE_CLOUD_PROJECT=your-project-id
-    GOOGLE_CLOUD_LOCATION=global
-    GOOGLE_GENAI_USE_VERTEXAI=1
-    YOUTUBE_API_KEY=your-youtube-data-api-key
-    ```
-
-## Usage
-
-### Running in CLI
-
-Interact with the agent directly in your terminal:
+Use the [Agent Starter Pack](https://goo.gle/agent-starter-pack) to scaffold a production-ready project and choose your deployment target ([Vertex AI Agent Engine](https://cloud.google.com/vertex-ai/generative-ai/docs/agent-engine/overview) or [Cloud Run](https://cloud.google.com/run)), with CI/CD and other production features. The easiest way is with [uv](https://docs.astral.sh/uv/) (one command, no venv or pip install needed):
 
 ```bash
+uvx agent-starter-pack create my-youtube-analyst -a adk@youtube-analyst
+```
+
+If you don't have uv yet: `curl -LsSf https://astral.sh/uv/install.sh | sh`
+
+The starter pack will prompt you to select deployment options and set up your Google Cloud project.
+
+<details>
+<summary>Alternative: Using pip + virtual environment</summary>
+
+```bash
+python -m venv .venv && source .venv/bin/activate  # Windows: .venv\Scripts\activate
+pip install --upgrade agent-starter-pack
+agent-starter-pack create my-youtube-analyst -a adk@youtube-analyst
+```
+
+</details>
+
+From your newly created project directory (e.g. `my-youtube-analyst`), copy the env template and configure credentials:
+
+```bash
+cp .env.example .env
+```
+
+Set `GOOGLE_CLOUD_PROJECT`, `GOOGLE_CLOUD_LOCATION=global`, `GOOGLE_GENAI_USE_VERTEXAI=1`, and `YOUTUBE_API_KEY`, then run:
+
+```bash
+cd my-youtube-analyst
+uv sync --dev
 uv run adk run youtube_analyst
 ```
 
-### Running with Web UI
-
-For a richer experience with interactive charts:
+For the web UI (recommended for interactive charts):
 
 ```bash
 uv run adk web
 ```
 
-*Select `youtube_analyst` from the dropdown menu.*
+Then select `youtube_analyst` from the dropdown menu.
+
+---
+
+<details>
+<summary>Alternative: Local development (run from this sample repo)</summary>
+
+### Clone and install
+
+```bash
+git clone https://github.com/google/adk-samples.git
+cd adk-samples/python/agents/youtube-analyst
+```
+
+Stay in `python/agents/youtube-analyst` for the steps below.
+
+```bash
+uv sync
+```
+
+### Configuration
+
+Copy the environment template and edit values:
+
+```bash
+cp .env.example .env
+```
+
+Set `GOOGLE_CLOUD_PROJECT`, `GOOGLE_CLOUD_LOCATION=global`, `GOOGLE_GENAI_USE_VERTEXAI=1`, and `YOUTUBE_API_KEY`.
+
+### Running the agent locally
+
+**CLI:**
+
+```bash
+adk run .
+```
+
+**ADK web UI:**
+
+```bash
+adk web
+```
+
+Then select `youtube_analyst` from the dropdown.
+
+</details>
 
 ## Example Interactions
 
