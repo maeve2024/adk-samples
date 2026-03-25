@@ -126,7 +126,7 @@ uv sync --dev
 uv run adk run youtube_analyst
 ```
 
-For the web UI (recommended for interactive charts):
+For the Web UI (recommended for interactive charts):
 
 ```bash
 uv run adk web
