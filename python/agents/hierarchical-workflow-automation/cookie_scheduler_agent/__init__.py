@@ -12,10 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Multi-agent system for bakery order processing
-# To use the agents, import them directly:
-# from agents.multi_agent_system import root_agent
-
 import os
 
 import google.auth
