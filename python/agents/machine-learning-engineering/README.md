@@ -2,47 +2,44 @@
 
 ## Overview
 
-The Machine Learning Engineering Agent is an approach to building Machine Learning Engineering (MLE) agents that can train state-of-the-art machine learning models on various tasks (including classification and regression tasks), through a novel approach of leveraging web search and targeted code block refinement. Using the example of predicting California housing prices, we show how MLE-STAR can create a regression model based on factors like population, income, etc. that outperforms traditional approaches to training ML models. The experimental results show that MLE-STAR achieves medals in 63.6% of the Kaggle competitions on the MLE-bench-Lite, significantly outperforming the best alternative. The implementation is based on the Google Cloud AI Research paper "MLE-STAR: Machine Learning Engineering Agent via Search and Targeted Refinement" ([https://www.arxiv.org/abs/2506.15692](https://www.arxiv.org/abs/2506.15692)).
+The Machine Learning Engineering Agent is an approach to building Machine Learning Engineering (MLE) agents that can train state-of-the-art machine learning models on various tasks (including classification and regression tasks), through a novel approach of leveraging web search and targeted code block refinement. Using the example of predicting California housing prices, we show how MLE-STAR can create a regression model based on factors like population, income, etc. that outperforms traditional approaches to training ML models. The experimental results show that MLE-STAR achieves medals in 63.6% of the Kaggle competitions on the MLE-bench-Lite, significantly outperforming the best alternative. The implementation is based on the Google Cloud AI Research paper "MLE-STAR: Machine Learning Engineering Agent via Search and Targeted Refinement" (https://www.arxiv.org/abs/2506.15692).
 
 #### Performance of MLE agents on [MLE-Bench-Lite](https://github.com/openai/mle-bench/tree/main) datasets.
 
-
-| MLE Agents                                           | Base LLM             | Any Medals | Gold Medals | Silver Medals | Bronze Medals |
-| ---------------------------------------------------- | -------------------- | ---------- | ----------- | ------------- | ------------- |
-| [**MLE-STAR**](https://www.arxiv.org/pdf/2506.15692) | **Gemini-2.5-Pro**   | **63.6%**  | **36.4%**   | **21.2%**     | 6.1%          |
-| [**MLE-STAR](https://www.arxiv.org/pdf/2506.15692)** | **Gemini-2.5-Flash** | 43.9%      | 30.3%       | 4.5%          | **9.1%**      |
-
-
+| MLE Agents | Base LLM | Any Medals| Gold Medals | Silver Medals | Bronze Medals |
+| --- | --- | --- | --- | --- | --- |
+| [ **MLE-STAR** ](https://www.arxiv.org/pdf/2506.15692) | **Gemini-2.5-Pro** | **63.6%** | **36.4%** | **21.2%** | 6.1% |
+| [ **MLE-STAR** ](https://www.arxiv.org/pdf/2506.15692) | **Gemini-2.5-Flash** | 43.9% | 30.3% | 4.5% | **9.1%** |
 ---
 
-  
-
+<br>
 
 ## Agent Details
 
 The key features of the Machine Learning Agent include:
 
-
-| Feature              | Description                      |
-| -------------------- | -------------------------------- |
-| **Interaction Type** | Conversational                   |
-| **Complexity**       | Advanced                         |
-| **Agent Type**       | Multi Agent                      |
-| **Components**       | Tools: Code execution, Retrieval |
-| **Vertical**         | All                              |
-
+| Feature | Description |
+| --- | --- |
+| **Interaction Type** | Conversational |
+| **Complexity**  | Advanced |
+| **Agent Type**  | Multi Agent |
+| **Components**  | Tools: Code execution, Retrieval |
+| **Vertical**  | All |
 
 ### Agent architecture
 
 This diagram shows the detailed architecture of the agents and tools used
 to implement this workflow.
-
+<img src="machine-learning-engineering-architecture.svg" alt="Machine-Learning-Engineering" width="800"/>
 
 ### Key Features
 
 1. **Initial Solution Generation:** Uses a search engine to retrieve state-of-the-art models and their example codes, then merges the best-performing candidates into a consolidated initial solution.
+
 2. **Code Block Refinement:** Iteratively improves the solution by identifying and targeting specific code blocks (ML pipeline components) that have the most significant impact on performance, determined through ablation studies. An inner loop refines the targeted block with various strategies.
+
 3. **Ensemble Strategies:** Introduces a novel ensembling method where the Agent proposes and refines ensemble strategies to combine multiple solutions, aiming for superior performance than individual best solutions.
+
 4. **Robustness Modules:** Includes a debugging agent for error correction, a data leakage checker to prevent improper data access during preprocessing, and a data usage checker to ensure all provided data sources are utilized.
 
 ## Setup and Installation
