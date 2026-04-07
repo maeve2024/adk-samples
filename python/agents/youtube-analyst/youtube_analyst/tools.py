@@ -1,12 +1,18 @@
 import datetime
+import json
 import logging
 import math
 import os
+import random
+import re
+import string
 
 from google.adk.tools import ToolContext
+from google.cloud import storage
 from google.genai import types
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
+from youtube_transcript_api import YouTubeTranscriptApi
 
 from .config import config
 
@@ -15,19 +21,27 @@ logger = logging.getLogger(__name__)
 
 def get_youtube_client():
     """Builds and returns the YouTube Data API client."""
-    return build("youtube", "v3", developerKey=config.API_KEY)
+    return build("youtube", "v3", developerKey=config.YOUTUBE_API_KEY)
 
 
 def search_youtube(
-    query: str, max_results: int = 10, published_after: str = ""
+    query: str,
+    max_results: int = 10,
+    published_after: str = "",
+    region_code: str = "",
+    relevance_language: str = "",
+    video_duration: str = "any",
 ):
     """
-    Searches YouTube for videos matching the query.
+    Searches YouTube for videos matching the query with advanced filtering.
 
     Args:
         query: The search term.
         max_results: Maximum number of results to return (default 10).
         published_after: Filter for videos published after this date (RFC 3339 format, e.g., '2023-01-01T00:00:00Z').
+        region_code: ISO 3166-1 alpha-2 country code (e.g., 'US', 'GB', 'JP'). Returns videos viewable in this region.
+        relevance_language: ISO 639-1 two-letter language code (e.g., 'en', 'es', 'zh-Hans'). Instructs the API to return results most relevant to this language.
+        video_duration: Filter by duration. Acceptable values are 'any', 'long' (> 20 mins), 'medium' (4-20 mins), 'short' (< 4 mins).
 
     Returns:
         A list of dictionaries containing video title, videoId, and channelTitle.
@@ -39,9 +53,14 @@ def search_youtube(
             "type": "video",
             "part": "id,snippet",
             "maxResults": max_results,
+            "videoDuration": video_duration,
         }
         if published_after:
             kwargs["publishedAfter"] = published_after
+        if region_code:
+            kwargs["regionCode"] = region_code
+        if relevance_language:
+            kwargs["relevanceLanguage"] = relevance_language
 
         search_response = youtube.search().list(**kwargs).execute()
 
@@ -64,7 +83,7 @@ def search_youtube(
         return []
 
 
-def get_video_details(video_ids: list):
+def get_video_details(video_ids: list[str]) -> list[dict]:
     """
     Retrieves statistics and snippet details for a list of video IDs.
 
@@ -84,23 +103,45 @@ def get_video_details(video_ids: list):
 
         video_response = (
             youtube.videos()
-            .list(id=ids_string, part="snippet,statistics,contentDetails")
+            .list(
+                id=ids_string,
+                part="snippet,statistics,contentDetails,status,topicDetails",
+            )
             .execute()
         )
 
         results = []
         for video_result in video_response.get("items", []):
-            stats = video_result["statistics"]
-            snippet = video_result["snippet"]
+            stats = video_result.get("statistics", {})
+            snippet = video_result.get("snippet", {})
+            content_details = video_result.get("contentDetails", {})
+            status = video_result.get("status", {})
+            topic_details = video_result.get("topicDetails", {})
+
+            # Extract the best available thumbnail
+            thumbnails = snippet.get("thumbnails", {})
+            thumbnail_url = ""
+            for quality in ["maxres", "standard", "high", "medium", "default"]:
+                if quality in thumbnails:
+                    thumbnail_url = thumbnails[quality]["url"]
+                    break
+
             results.append(
                 {
                     "videoId": video_result["id"],
-                    "title": snippet["title"],
-                    "channelTitle": snippet["channelTitle"],
+                    "title": snippet.get("title", ""),
+                    "channelTitle": snippet.get("channelTitle", ""),
                     "viewCount": stats.get("viewCount", 0),
                     "likeCount": stats.get("likeCount", 0),
                     "commentCount": stats.get("commentCount", 0),
-                    "publishedAt": snippet["publishedAt"],
+                    "publishedAt": snippet.get("publishedAt", ""),
+                    "duration": content_details.get("duration", ""),
+                    "licensedContent": content_details.get(
+                        "licensedContent", False
+                    ),
+                    "madeForKids": status.get("madeForKids", False),
+                    "topicCategories": topic_details.get("topicCategories", []),
+                    "thumbnail_url": thumbnail_url,
                     "tags": snippet.get("tags", []),
                 }
             )
@@ -110,7 +151,54 @@ def get_video_details(video_ids: list):
         return []
 
 
-def get_channel_details(channel_ids: list):
+def get_trending_videos(
+    region_code: str = "US", video_category_id: str = ""
+) -> list:
+    """
+    Retrieves the currently trending/most popular videos natively from YouTube, bypassing keyword search.
+    Use this to proactively discover "What matters today" without needing a specific search query.
+
+    Args:
+        region_code: ISO 3166-1 alpha-2 country code (e.g., 'US', 'GB', 'HK'). Default is 'US'.
+        video_category_id: Optional category ID (e.g., '28' for Science & Technology, '20' for Gaming).
+
+    Returns:
+        A list of dictionaries containing trending video details.
+    """
+    try:
+        youtube = get_youtube_client()
+        kwargs = {
+            "part": "id,snippet,statistics",
+            "chart": "mostPopular",
+            "regionCode": region_code,
+            "maxResults": 10,
+        }
+        if video_category_id:
+            kwargs["videoCategoryId"] = video_category_id
+
+        video_response = youtube.videos().list(**kwargs).execute()
+
+        results = []
+        for video_result in video_response.get("items", []):
+            stats = video_result.get("statistics", {})
+            snippet = video_result.get("snippet", {})
+            results.append(
+                {
+                    "videoId": video_result["id"],
+                    "title": snippet.get("title", ""),
+                    "channelTitle": snippet.get("channelTitle", ""),
+                    "viewCount": stats.get("viewCount", 0),
+                    "likeCount": stats.get("likeCount", 0),
+                    "publishedAt": snippet.get("publishedAt", ""),
+                }
+            )
+        return results
+    except HttpError as e:
+        logger.error(f"An HTTP error {e.resp.status} occurred:\n{e.content}")
+        return []
+
+
+def get_channel_details(channel_ids: list[str]):
     """
     Retrieves statistics and snippet details for a list of channel IDs.
 
@@ -129,22 +217,32 @@ def get_channel_details(channel_ids: list):
 
         channel_response = (
             youtube.channels()
-            .list(id=ids_string, part="snippet,statistics")
+            .list(
+                id=ids_string,
+                part="snippet,statistics,brandingSettings,topicDetails",
+            )
             .execute()
         )
 
         results = []
         for channel_result in channel_response.get("items", []):
-            stats = channel_result["statistics"]
-            snippet = channel_result["snippet"]
+            stats = channel_result.get("statistics", {})
+            snippet = channel_result.get("snippet", {})
+            branding = channel_result.get("brandingSettings", {}).get(
+                "channel", {}
+            )
+            topics = channel_result.get("topicDetails", {})
+
             results.append(
                 {
                     "channelId": channel_result["id"],
-                    "title": snippet["title"],
-                    "description": snippet["description"],
+                    "title": snippet.get("title", ""),
+                    "description": snippet.get("description", ""),
                     "subscriberCount": stats.get("subscriberCount", 0),
                     "videoCount": stats.get("videoCount", 0),
                     "viewCount": stats.get("viewCount", 0),
+                    "keywords": branding.get("keywords", ""),
+                    "topicCategories": topics.get("topicCategories", []),
                 }
             )
         return results
@@ -153,13 +251,16 @@ def get_channel_details(channel_ids: list):
         return []
 
 
-def get_video_comments(video_id: str, max_results: int = 20):
+def get_video_comments(
+    video_id: str, max_results: int = 20, order: str = "time"
+):
     """
     Retrieves top-level comments for a specific video.
 
     Args:
         video_id: The ID of the video.
         max_results: Maximum number of comments to return.
+        order: The order of comments ('time' or 'relevance'). Default is 'time'.
 
     Returns:
         A list of comment strings.
@@ -173,6 +274,7 @@ def get_video_comments(video_id: str, max_results: int = 20):
                 part="snippet",
                 maxResults=max_results,
                 textFormat="plainText",
+                order=order,
             )
             .execute()
         )
@@ -187,6 +289,21 @@ def get_video_comments(video_id: str, max_results: int = 20):
     except HttpError as e:
         logger.error(f"An HTTP error {e.resp.status} occurred:\n{e.content}")
         return []
+
+
+def generate_timestamp_url(video_id: str, timestamp_str: str) -> str:
+    """
+    Generates a direct, clickable YouTube URL that jumps to a specific timestamp.
+
+    Args:
+        video_id: The ID of the YouTube video.
+        timestamp_str: The timestamp string (e.g., '05:22', '1:05:22', or raw seconds '322').
+
+    Returns:
+        The exact URL (e.g., 'https://youtu.be/VIDEO_ID?t=322').
+    """
+    total_seconds = parse_timestamp_to_seconds(timestamp_str)
+    return f"https://youtu.be/{video_id}?t={total_seconds}"
 
 
 def calculate_engagement_metrics(
@@ -245,10 +362,9 @@ def calculate_match_score(
     # Log-normalize subscribers (assuming base 10, offset to avoid log(0))
     sub_log = math.log10(max(subscribers, 1))
     # Normalize sub score: loosely based on 10k-1M+ range mapping to 0-1
-    # Original: Math.min(Math.max((subLog - 3) / 4, 0), 1) * 100;
     sub_score = min(max((sub_log - 3) / 4, 0), 1) * 100
 
-    # Cap engagement and active scores at decent thresholds (e.g., 10% eng is great, 100% active is great)
+    # Cap engagement and active scores at decent thresholds
     eng_score = min((engagement_rate / 10), 1) * 100
     active_score = min((active_rate / 100), 1) * 100
 
@@ -391,3 +507,303 @@ async def render_html(
         return f"HTML saved to {filename}"
     except Exception as e:
         return f"Error saving HTML: {e!s}"
+
+
+def parse_timestamp_to_seconds(timestamp_str: str) -> int:
+    """
+    Parses a timestamp string into an integer representing total seconds.
+
+    Supports formats: raw seconds ('322'), MM:SS ('05:22'), or HH:MM:SS ('1:05:22').
+
+    >>> parse_timestamp_to_seconds('322')
+    322
+    >>> parse_timestamp_to_seconds('05:22')
+    322
+    >>> parse_timestamp_to_seconds('5:22')
+    322
+    >>> parse_timestamp_to_seconds('1:05:22')
+    3922
+    >>> parse_timestamp_to_seconds('01:05:22')
+    3922
+    >>> parse_timestamp_to_seconds('invalid')
+    0
+    """
+    try:
+        # Match optional HH:, required MM:, required SS
+        # Groups: 1=HH (optional), 2=MM (or raw seconds if no colon), 3=SS (optional)
+        match = re.fullmatch(
+            r"(?:(?:(\d+):)?(\d+):)?(\d+)", str(timestamp_str).strip()
+        )
+        if not match:
+            return 0
+
+        hh, mm, ss = match.groups()
+
+        # If only the last group matched, it's just raw seconds
+        if not hh and not mm:
+            return int(ss)
+
+        total = 0
+        if hh:
+            total += int(hh) * 3600
+        if mm:
+            total += int(mm) * 60
+        if ss:
+            total += int(ss)
+
+        return total
+    except Exception:
+        pass
+    return 0
+
+
+# --- NEW METADATA/TEXT TOOLS FOR PR3 ---
+
+
+def get_comment_replies(comment_id: str, max_results: int = 50) -> list[str]:
+    """
+    Retrieves the replies to a specific top-level comment.
+    Use this to dig deep into a specific community debate or controversy.
+
+    Args:
+        comment_id: The ID of the top-level comment (obtained from get_video_comments).
+        max_results: Maximum number of replies to return.
+
+    Returns:
+        A list of reply strings.
+    """
+    try:
+        youtube = get_youtube_client()
+        reply_response = (
+            youtube.comments()
+            .list(
+                parentId=comment_id,
+                part="snippet",
+                maxResults=max_results,
+                textFormat="plainText",
+            )
+            .execute()
+        )
+
+        replies = []
+        for item in reply_response.get("items", []):
+            replies.append(item["snippet"]["textDisplay"])
+        return replies
+    except HttpError as e:
+        logger.error(f"An HTTP error {e.resp.status} occurred:\n{e.content}")
+        return []
+
+
+def aggregate_comment_sentiment(
+    video_ids: list[str], comments_per_video: int = 10
+) -> dict:
+    """
+    Fetches comments across multiple videos simultaneously to generate a macro-sentiment view.
+    Use this for Product Launch Audits to see what the entire audience is saying across different reviews.
+
+    Args:
+        video_ids: A list of video IDs to fetch comments for.
+        comments_per_video: How many top comments to pull per video.
+
+    Returns:
+        A dictionary mapping videoId to a list of comment strings.
+    """
+    # We use the synchronous get_video_comments in a loop here.
+    aggregated_data = {}
+    for vid in video_ids:
+        # Get top 'relevance' comments
+        comments_data = get_video_comments(
+            vid, max_results=comments_per_video, order="relevance"
+        )
+        aggregated_data[vid] = comments_data
+
+    return aggregated_data
+
+
+def search_channel_videos(
+    channel_id: str, max_results: int = 5, published_after: str = ""
+) -> list[dict]:
+    """
+    Searches for the most recent videos uploaded by a specific channel.
+    Use this for Industry Landscape Briefings to track specific 'analyst' or 'competitor' channels.
+
+    Args:
+        channel_id: The ID of the YouTube channel.
+        max_results: Maximum number of videos to return.
+        published_after: Filter for videos published after this date (RFC 3339).
+
+    Returns:
+        A list of dictionaries containing video title, videoId, and publishedAt.
+    """
+    try:
+        youtube = get_youtube_client()
+        kwargs = {
+            "channelId": channel_id,
+            "type": "video",
+            "part": "id,snippet",
+            "order": "date",  # Always get the newest first
+            "maxResults": max_results,
+        }
+        if published_after:
+            kwargs["publishedAfter"] = published_after
+
+        search_response = youtube.search().list(**kwargs).execute()
+
+        results = []
+        for search_result in search_response.get("items", []):
+            if search_result["id"]["kind"] == "youtube#video":
+                results.append(
+                    {
+                        "title": search_result["snippet"]["title"],
+                        "videoId": search_result["id"]["videoId"],
+                        "publishedAt": search_result["snippet"]["publishedAt"],
+                        "description": search_result["snippet"]["description"],
+                    }
+                )
+        return results
+    except HttpError as e:
+        logger.error(f"An HTTP error {e.resp.status} occurred:\n{e.content}")
+        return []
+
+
+def get_video_transcript(video_id: str) -> str:
+    """
+    Retrieves the full transcript/captions for a specific YouTube video.
+    Use this to "read" the video for the user to save them time, extract key arguments, or find exact timestamps.
+
+    Args:
+        video_id: The ID of the YouTube video.
+
+    Returns:
+        A string containing the transcript with timestamps, or an error message if captions are disabled.
+    """
+    try:
+        # Fetch the transcript (prioritizes English, but falls back to others)
+        transcript = YouTubeTranscriptApi.get_transcript(video_id)
+
+        # Format it into a readable string with basic timestamps
+        formatted_transcript = ""
+        for entry in transcript:
+            # Convert seconds to MM:SS
+            start_val = entry["start"]
+            text_val = entry["text"]
+
+            start_time = int(start_val)
+            minutes, seconds = divmod(start_time, 60)
+            formatted_time = f"[{minutes:02d}:{seconds:02d}]"
+
+            # Clean up newlines within single subtitle blocks
+            clean_text = text_val.replace("\n", " ")
+            formatted_transcript += f"{formatted_time} {clean_text}\n"
+
+        return formatted_transcript
+    except Exception as e:
+        logger.warning(f"Failed to fetch transcript for {video_id}: {e}")
+        return f"TRANSCRIPT_UNAVAILABLE: No captions found for video '{video_id}'. You MUST fall back to using 'get_video_details' to read the video description instead."
+
+
+def submit_feedback(
+    feedback_text: str,
+    category: str = "general",
+    tool_context: ToolContext = None,
+) -> str:
+    """
+    Submits user feedback regarding the agent's performance, accuracy, or content relevance.
+    Use this tool when the user explicitly provides feedback or corrects your behavior.
+
+    Args:
+        feedback_text: The user's feedback message.
+        category: The type of feedback (e.g., 'accuracy', 'feature_request', 'general').
+        tool_context: The ADK tool context (automatically injected).
+
+    Returns:
+        A confirmation message.
+    """
+    session_id = "unknown"
+    user_id = "unknown"
+    app_name = "unknown"
+    if tool_context and tool_context.session:
+        session_id = tool_context.session.id or "unknown"
+        user_id = tool_context.session.user_id or "unknown"
+        app_name = tool_context.session.app_name or "unknown"
+
+    # Create a structured JSON payload for Google Cloud Logging
+    feedback_payload = {
+        "event_type": "USER_FEEDBACK",
+        "category": category,
+        "session_id": session_id,
+        "user_id": user_id,
+        "app_name": app_name,
+        "feedback_text": feedback_text,
+        "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+    }
+
+    # Log it as a WARNING so it stands out from standard INFO traffic
+    # When deployed to Vertex, this JSON string will be parsed by Cloud Logging
+    logger.warning(json.dumps(feedback_payload))
+
+    return "Feedback successfully recorded. Thank you!"
+
+
+def publish_file(
+    content: str,
+    filename: str,
+    mime_type: str = "text/html",
+    tool_context: ToolContext = None,
+) -> str:
+    """
+    Publishes content to a temporary public URL using Google Cloud Storage.
+    Use this tool when you have generated a comprehensive HTML report or image and need to
+    provide the user with a direct link to view it in their browser.
+
+    Args:
+        content: The raw string or bytes content to publish.
+        filename: The desired filename (e.g., 'report.html' or 'chart.png').
+        mime_type: The MIME type of the file (default: 'text/html').
+        tool_context: The ADK tool context (automatically injected).
+
+    Returns:
+        A string containing the public URL where the user can view the file, or an error message.
+    """
+    try:
+        bucket_name = config.PUBLIC_ARTIFACT_BUCKET
+        if not bucket_name:
+            return "ERROR: PUBLIC_ARTIFACT_BUCKET is not configured. Please set this environment variable to enable public file publishing."
+
+        public_url_prefix = f"https://storage.googleapis.com/{bucket_name}"
+
+        # Determine path parameters
+        now = datetime.datetime.now(datetime.timezone.utc)
+        date_str = now.strftime("%Y%m%d")
+
+        # Extract session_id if available to group files
+        session_folder = "no_session"
+        if tool_context and tool_context.session:
+            session_folder = tool_context.session.id or "no_session"
+
+        random_str = "".join(
+            random.choices(string.ascii_lowercase + string.digits, k=6)
+        )
+
+        # New structure: exports/youtube-analyst/YYYYMMDD/session_id/random/filename
+        path_suffix = f"exports/youtube-analyst/{date_str}/{session_folder}/{random_str}/{filename}"
+
+        client = storage.Client()
+        bucket = client.bucket(bucket_name)
+        blob = bucket.blob(path_suffix)
+
+        # Upload the content
+        if isinstance(content, str):
+            blob.upload_from_string(content, content_type=mime_type)
+        else:
+            blob.upload_from_string(
+                content, content_type=mime_type
+            )  # works for bytes too
+
+        logger.info(f"Successfully published file to {path_suffix}")
+
+        return f"File successfully published. View it here: {public_url_prefix}/{path_suffix}"
+
+    except Exception as e:
+        logger.error(f"Failed to publish file: {e}")
+        return f"Failed to publish file to public URL: {e!s}"
