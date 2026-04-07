@@ -33,7 +33,7 @@ dev = [
     "nest-asyncio>=1.6.0",
     "mypy>=1.14.0",
     "jupyter>=1.0.0",
-    "agent-starter-pack>=0.14.1",
+    "agent-starter-pack>=0.32.0",
 ]
 
 [tool.agent-starter-pack]

@@ -13,9 +13,7 @@
 # limitations under the License.
 
 import logging
-import os
 
-import google.auth
 from google.adk.agents import Agent
 
 from .screenplay_agent import screenplay_agent
@@ -23,11 +21,6 @@ from .story_agent import story_agent
 from .storyboard_agent import storyboard_agent
 from .utils.utils import load_prompt_from_file
 from .video_agent import video_agent
-
-_, project_id = google.auth.default()
-os.environ.setdefault("GOOGLE_CLOUD_PROJECT", project_id)
-os.environ.setdefault("GOOGLE_CLOUD_LOCATION", "global")
-os.environ.setdefault("GOOGLE_GENAI_USE_VERTEXAI", "True")
 
 # Set logging
 logger = logging.getLogger(__name__)
