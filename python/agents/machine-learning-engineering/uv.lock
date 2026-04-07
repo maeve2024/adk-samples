@@ -1636,7 +1636,7 @@ provides-extras = ["lint"]
 [package.metadata.requires-dev]
 deployment = [{ name = "absl-py", specifier = ">=2.2.1" }]
 dev = [
-    { name = "agent-starter-pack", specifier = ">=0.14.1" },
+    { name = "agent-starter-pack", specifier = ">=0.32.0" },
     { name = "google-adk", extras = ["eval"], specifier = ">=1.5.0" },
     { name = "google-cloud-aiplatform", extras = ["evaluation"], specifier = ">=1.93.0" },
     { name = "pytest", specifier = ">=8.3.5" },
