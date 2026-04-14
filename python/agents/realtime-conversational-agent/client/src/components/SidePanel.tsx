@@ -1,10 +1,11 @@
 import React from 'react';
 import { Bot, User, Code, Terminal } from 'lucide-react';
 
-type EventPart = {
-  type: 'text' | 'audio/pcm' | 'function_call' | 'function_response';
-  data: any;
-};
+type EventPart =
+  | { type: 'text'; data: string }
+  | { type: 'audio/pcm'; data: string }
+  | { type: 'function_call'; data: { name: string; args: unknown } }
+  | { type: 'function_response'; data: { name: string; response: unknown } };
 
 type TranscriptionData = {
   text: string;

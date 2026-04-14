@@ -28,7 +28,7 @@ class AudioPlayerProcessor extends AudioWorkletProcessor {
     };
   }
 
-  process(inputs, outputs, parameters) {
+  process(inputs, outputs, _parameters) {
     const outputChannel = outputs[0][0];
 
     for (let i = 0; i < outputChannel.length; i++) {

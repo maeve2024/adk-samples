@@ -157,6 +157,35 @@ export function useLiveConnection() {
     }
   }, []);
 
+  const disconnect = useCallback(() => {
+    setConnectionState("closing");
+
+    wsRef.current?.close();
+    wsRef.current = null;
+
+    stopVideoFrameCapture();
+
+    audioRecorderContextRef.current?.close();
+    audioRecorderNodeRef.current?.port.close();
+    audioRecorderContextRef.current = null;
+    audioRecorderNodeRef.current = null;
+
+    audioPlayerContextRef.current?.close();
+    audioPlayerNodeRef.current?.port.close();
+    audioPlayerContextRef.current = null;
+    audioPlayerNodeRef.current = null;
+
+    mediaStreamRef.current?.getTracks().forEach((track) => track.stop());
+    mediaStreamRef.current = null;
+
+    if (videoElementRef.current) {
+      videoElementRef.current.srcObject = null;
+    }
+
+    setConnectionState("closed");
+    console.log("Disconnected and cleaned up all resources.");
+  }, [stopVideoFrameCapture]);
+
   const connect = useCallback(
     async (
       videoEl: HTMLVideoElement,
@@ -286,37 +315,8 @@ export function useLiveConnection() {
         setConnectionState("error");
       }
     },
-    [connectionState, setupAudioRecording, startVideoFrameCapture, setupAudioPlayback]
+    [setupAudioRecording, startVideoFrameCapture, setupAudioPlayback, disconnect]
   );
-
-  const disconnect = useCallback(() => {
-    setConnectionState("closing");
-    
-    wsRef.current?.close();
-    wsRef.current = null;
-
-    stopVideoFrameCapture();
-
-    audioRecorderContextRef.current?.close();
-    audioRecorderNodeRef.current?.port.close();
-    audioRecorderContextRef.current = null;
-    audioRecorderNodeRef.current = null;
-    
-    audioPlayerContextRef.current?.close();
-    audioPlayerNodeRef.current?.port.close();
-    audioPlayerContextRef.current = null;
-    audioPlayerNodeRef.current = null;
-
-    mediaStreamRef.current?.getTracks().forEach((track) => track.stop());
-    mediaStreamRef.current = null;
-
-    if (videoElementRef.current) {
-      videoElementRef.current.srcObject = null;
-    }
-    
-    setConnectionState("closed");
-    console.log("Disconnected and cleaned up all resources.");
-  }, [stopVideoFrameCapture]);
 
   return {
     connectionState,

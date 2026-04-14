@@ -30,7 +30,7 @@ class AudioRecorderProcessor extends AudioWorkletProcessor {
     return Math.sqrt(sum / pcmData.length);
   }
 
-  process(inputs, outputs, parameters) {
+  process(inputs, _outputs, _parameters) {
     const inputChannel = inputs[0][0];
 
     if (!inputChannel) {
