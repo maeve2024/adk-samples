@@ -1,5 +1,7 @@
 # Image Scoring Agent
 
+This agent functions as an automated image generation and evaluation system specifically designed to create and validate images based on text descriptions while adhering to predefined policies. Its primary role is to ensure that generated images meet specific compliance and quality standards by iteratively generating and evaluating images until they satisfy policy requirements.
+
 ## Overview
 
 This agent generates and evaluates images based on text descriptions while ensuring compliance with predefined policies. Its primary purpose is to serve as an automated image generation and validation system that maintains high standards of quality and policy compliance.
