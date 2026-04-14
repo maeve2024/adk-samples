@@ -31,10 +31,54 @@ This template is the foundation for any application that requires an AI to see, 
 - **Accessibility Tools:** A "be my eyes" agent that can describe a user's surroundings or the content of their screen.
 - **Interactive Assistant:** An agent that pairs with you, watches you work, and provides real-time feedback or assistance.
 
-## Getting Started: Local Setup
-Follow these instructions to get the client and server running on your local machine.
+## Setup and Installation
 
 ### Prerequisites
+
+- Python 3.11+
+- Node.js v22+
+- uv for dependency management and packaging
+  - See the official [uv website](https://docs.astral.sh/uv/) for installation.
+
+  ```bash
+  curl -LsSf https://astral.sh/uv/install.sh | sh
+  ```
+
+## Agent Starter Pack (recommended)
+
+Use the [Agent Starter Pack](https://goo.gle/agent-starter-pack) to scaffold a production-ready project and choose your deployment target ([Vertex AI Agent Engine](https://cloud.google.com/vertex-ai/generative-ai/docs/agent-engine/overview) or [Cloud Run](https://cloud.google.com/run)), with CI/CD and other production features. The easiest way is with [uv](https://docs.astral.sh/uv/) (one command, no venv or pip install needed):
+
+```bash
+uvx agent-starter-pack create my-realtime-agent -a adk@realtime-conversational-agent
+```
+
+If you don't have uv yet: `curl -LsSf https://astral.sh/uv/install.sh | sh`
+
+The starter pack will prompt you to select deployment options and set up your Google Cloud project.
+
+<details>
+<summary>Alternative: Using pip and a virtual environment</summary>
+
+```bash
+# Create and activate a virtual environment
+python -m venv .venv && source .venv/bin/activate # On Windows: .venv\Scripts\activate
+
+# Install the starter pack and create your project
+pip install --upgrade agent-starter-pack
+agent-starter-pack create my-realtime-agent -a adk@realtime-conversational-agent
+```
+
+</details>
+
+---
+
+<details>
+<summary>Alternative: Local development (run from this sample repo)</summary>
+
+### Local Setup
+Follow these instructions to get the client and server running on your local machine.
+
+#### Prerequisites
 1. Node.js: v22 or later
 2. Python: 3.11 or later
 3. `uv` (Recommended): Python package manager
@@ -55,7 +99,7 @@ Follow these instructions to get the client and server running on your local mac
             ```
 
 
-### Server Setup
+#### Server Setup
 The server handles the AI agent logic and WebSocket connections.
 
 1. **Navigate to the server directory:**
@@ -120,7 +164,7 @@ The server handles the AI agent logic and WebSocket connections.
 
     The server will be running at `http://127.0.0.1:8000`.
 
-### Client Setup
+#### Client Setup
 The client is the Next.js application that the user interacts with.
 
 1. **Open a new terminal** and navigate to the client directory:
@@ -143,6 +187,8 @@ The client is the Next.js application that the user interacts with.
 4. **Open the app:**
 
     Open `http://localhost:3000` in your browser. You can now click the microphone icon to start a session!
+
+</details>
 
 ## How to Customize Your Agent
 This repository is designed for easy reuse. You don't need to change any Python code to completely change your agent's persona.

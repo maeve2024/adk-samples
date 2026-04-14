@@ -6,7 +6,6 @@ authors = [
     {name = "Stephen Allen", email = "stephenaallen@google.com"}
 ]
 license = {text = "Apache License 2.0"}
-readme = "README.md"
 requires-python = ">=3.11"
 
 dependencies = [
@@ -16,6 +15,14 @@ dependencies = [
     "fastapi>=0.116.1",
     "google-genai>=1.36.0",
     "google-adk>=1.14.1",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3.5",
+    "pytest-asyncio>=0.26.0",
+    "ruff>=0.4.6",
+    "agent-starter-pack>=0.32.0",
 ]
 
 [tool.ruff]
@@ -30,6 +37,15 @@ ignore = ["C901", "PLR0912"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["example_agent"]
+
+[tool.agent-starter-pack]
+example_question = "Help me solve a quadratic equation"
+
+[tool.agent-starter-pack.settings]
+agent_directory = "example_agent"
+
+[tool.hatch.build.targets.wheel]
+packages = ["example_agent"]
 
 [build-system]
 requires = ["hatchling"]
