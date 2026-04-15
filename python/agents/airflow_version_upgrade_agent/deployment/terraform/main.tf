@@ -12,27 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Enable required Google Cloud APIs
-resource "google_project_service" "apis" {
-  for_each = toset([
-    "run.googleapis.com",
-    "iam.googleapis.com",
-    "iamcredentials.googleapis.com",
-    "cloudbuild.googleapis.com",
-    "artifactregistry.googleapis.com",
-    "secretmanager.googleapis.com",
-    "bigquery.googleapis.com",
-    "aiplatform.googleapis.com",
-    "storage.googleapis.com", # Core storage API, `storage-component` is more for legacy
-    "customsearch.googleapis.com",
-    "discoveryengine.googleapis.com",
-  ])
-  project            = var.project_id
-  service            = each.key
-  disable_on_destroy = false # Keep APIs enabled if project is not destroyed
-}
 
 # Fetch project number for service agent identities
 data "google_project" "project" {
-  project_id = var.project_id
+  project_id = local.project_id
 }

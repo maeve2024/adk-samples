@@ -39,10 +39,11 @@ dev = [
 [tool.ruff]
 # Point back to the Master template in the root
 extend = "../../../pyproject.toml"
+exclude = ["Makefile"]
 
 [tool.ruff.lint]
 # Ignores function complication rule throughout sample
-ignore = ["C901", "PLR0915"]
+ignore = ["C901", "PLR0915", "PLR2004"]
 
 [tool.ruff.lint.per-file-ignores]
 # ignores unused import rule exclusively for this sample’s __init__.py files
@@ -78,8 +79,17 @@ exclude = [".venv"]
 packages = ["airflow_version_upgrade_agent"]
 
 [tool.pytest.ini_options]
-pythonpath = "."
-asyncio_default_fixture_loop_scope = "function"
+console_output_style = "progress"
+addopts = "-vv -s"
+testpaths = ["tests/"]
+log_level = "DEBUG"
+log_cli = true
+log_auto_indent = true
+log_cli_date_format = "%Y-%m-%d %H:%M:%S"
+log_cli_format = "[%(asctime)s] %(levelname)s (%(funcName)s) \t [%(pathname)s:%(lineno)d] %(message)s"
+filterwarnings = [
+    "ignore::UserWarning",
+]
 
 [tool.agent-starter-pack]
 example_question = "Help me migrate airflow"
